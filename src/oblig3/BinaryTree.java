@@ -1,4 +1,4 @@
-package oblig3forsok3;
+package oblig3;
 /**
  * Klassen binærtre
  */

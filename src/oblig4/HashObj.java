@@ -1,7 +1,5 @@
 package oblig4;
 
-import oblig3.Node;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
