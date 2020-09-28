@@ -1,0 +1,22 @@
+FOR METODE 1: x = 0.01, n = 10, millisekund per runde = 3.5062096902028825E-5, antall runder: 28520827
+FOR METODE 2: x = 0.01, n = 10, millisekund per runde = 1.7333978018643802E-5, antall runder: 57690162
+FOR METODE 3: x = 0.01, n = 10, millisekund per runde = 3.2002527431606436E-5, antall runder: 31247532
+FOR METODE 1: x = 0.01, n = 100, millisekund per runde = 3.725103734826256E-4, antall runder: 2684489
+FOR METODE 2: x = 0.01, n = 100, millisekund per runde = 3.4782482873801084E-5, antall runder: 28750104
+FOR METODE 3: x = 0.01, n = 100, millisekund per runde = 3.608529408792976E-5, antall runder: 27712120
+FOR METODE 1: x = 0.01, n = 1000, millisekund per runde = 0.00538578368538406, antall runder: 185674
+FOR METODE 2: x = 0.01, n = 1000, millisekund per runde = 3.6431921708091704E-5, antall runder: 27448456
+FOR METODE 3: x = 0.01, n = 1000, millisekund per runde = 2.793245217992119E-5, antall runder: 35800652
+FOR METODE 1: x = 0.01, n = 10000, millisekund per runde = 0.04931696010257928, antall runder: 20277
+FOR METODE 2: x = 0.01, n = 10000, millisekund per runde = 9.733276114647481E-5, antall runder: 10274033
+FOR METODE 3: x = 0.01, n = 10000, millisekund per runde = 1.6335862990725036E-5, antall runder: 61215009
+FOR METODE 1: x = 0.01, n = 10000, millisekund per runde = 0.0390015600624025, antall runder: 25640
+FOR METODE 2: x = 0.01, n = 10000, millisekund per runde = 7.725042261774953E-5, antall runder: 12944913
+FOR METODE 3: x = 0.01, n = 10000, millisekund per runde = 1.5037114154041582E-5, antall runder: 66502122
+FOR METODE 1: x = 0.01, n = 10000, millisekund per runde = 0.0397456279809221, antall runder: 25160
+FOR METODE 2: x = 0.01, n = 10000, millisekund per runde = 8.014025185196108E-5, antall runder: 12478124
+FOR METODE 3: x = 0.01, n = 10000, millisekund per runde = 1.936299165346627E-5, antall runder: 51644912
+FOR METODE 1: x = 1.001, n = 5000, millisekund per runde = 0.023587687227267368, antall runder: 42395
+FOR METODE 2: x = 1.001, n = 5000, millisekund per runde = 3.5650644221401335E-5, antall runder: 28049984
+FOR METODE 3: x = 1.001, n = 5000, millisekund per runde = 4.250311016508633E-5, antall runder: 23527690
+

@@ -1,0 +1,5 @@
+x = 0.01, n = 10, millisekund per runde = 3.6775196277496954E-5
+x = 0.01, n = 100, millisekund per runde = 4.6251043076648986E-5
+x = 0.01, n = 1000, millisekund per runde = 3.821045608497119E-5
+x = 0.01, n = 10000, millisekund per runde = 2.167213902625172E-5
+x = 1.001, n = 5000, millisekund per runde = 5.241929185101221E-5
