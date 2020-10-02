@@ -150,7 +150,6 @@ class UndirectedGraph {
         String path = "src\\oving5\\L7g1";
         String path2 = "src\\oving5\\L7g6";
         String path3 = "src\\oving5\\L7g2";
-        String path4 = "src\\oving5\\L7Skandinavia";
         try {
             BufferedReader br = new BufferedReader(new FileReader(new File(path3)));
             graph.new_ugraph(br);
