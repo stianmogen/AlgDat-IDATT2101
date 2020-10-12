@@ -1,4 +1,4 @@
-package oving5;
+package oblig5;
 import java.io.*;
 import java.util.Iterator;
 import java.util.Stack;
@@ -147,9 +147,9 @@ class UndirectedGraph {
 
     public static void main(String args[]) {
         UndirectedGraph graph = new UndirectedGraph();
-        String path = "src\\oving5\\L7g1";
-        String path2 = "src\\oving5\\L7g6";
-        String path3 = "src\\oving5\\L7g2";
+        String path = "src\\oblig5\\L7g1";
+        String path2 = "src\\oblig5\\L7g6";
+        String path3 = "src\\oblig5\\L7g2";
         try {
             BufferedReader br = new BufferedReader(new FileReader(new File(path3)));
             graph.new_ugraph(br);

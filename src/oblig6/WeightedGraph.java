@@ -107,9 +107,9 @@ public class WeightedGraph {
 
     public static void main(String[] args) {
         WeightedGraph weightedGraph = new WeightedGraph();
-        String file_name = "vg1";
-        String path = "src\\oblig6done\\"+file_name;
-        int s = 1;
+        String file_name = "vg2";
+        String path = "src\\oblig6\\"+file_name;
+        int s = 7;
         try {
             BufferedReader br = new BufferedReader(new FileReader(new File(path)));
             weightedGraph.new_wgraph(br);
