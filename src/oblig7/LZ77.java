@@ -1,32 +1,25 @@
 package oblig7;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Class for compression with Lempel Ziv method
  */
 
 public class LZ77 {
-    /**
-     * final values for buffer looking back through array, and for use by pointer class
-     */
-    private static final int BUFFERSIZE = (1 << 7) - 1; //7 bits for looking back
+    //final values for buffer looking back through array, and for use by pointer class
+    private static final int BUFFERSIZE = (1 << 11) - 1; //11 bits for looking back
     private static final int POINTERSIZE = (1 << 4) - 1; //4 bits for match size
-    private static final int MIN_SIZE_POINTER = 3; //compressed text may only be larger than 3 characters
-    private int buffersize;
+    private static final int MIN_SIZE_POINTER = 3;
     private char[] data;
 
-    DataInputStream inputStream;
-    DataOutputStream outputStream;
+    private DataInputStream inputStream;
+    private DataOutputStream outputStream;
 
-    /**
-     * LZ77 constructor sets our non final buffersize equal to BUFFERSIZE
-     */
     public LZ77() {
-        this.buffersize = BUFFERSIZE;
     }
 
     /**
@@ -40,51 +33,69 @@ public class LZ77 {
         outputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path+"compress")));
         data = new char[inputStream.available()]; //sets the length of character array to the size of the input stream
 
-        String text = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8); //we read all the bytes from the input stream into a string
+        //Before compressing
+        String text = new String(inputStream.readAllBytes(), StandardCharsets.ISO_8859_1); //we read all the bytes from the input stream into a string
         data = text.toCharArray(); //we convert it to a character array
-        System.out.println("\n--< Before compression >--");
         for (char c : data ){
             System.out.print((byte)c + " "); //we print all the bytes from array
         }
 
-        StringBuilder incompressible = new StringBuilder(); //creating a string builder as to more easily handle all characters
-        for (int i = 0; i < data.length;){ //for the entire length of all characters
-            Pointer pointer = findPointer(i); //we find the given pointer (if any) to the current index
-            if (pointer != null){ //if a pointer is returned
-                if (incompressible.length() != 0) { //if the stringbuilder is not empyt
-                    outputStream.writeByte((byte) incompressible.length()); //we write the length of the stringbuilder as a byte to our output stream
-                    for(int c = 0; c < incompressible.length(); c++) //we iterate through the stringbuilder
-                        outputStream.writeByte((byte)incompressible.charAt(c)); //and write each character as a byte to out outputstream
-                    incompressible = new StringBuilder(); //we then reset the stringbuilder
+        //For keeping track of variables that can not be compressed
+        StringBuilder incompressible = new StringBuilder();
+
+        for (int i = 0; i < data.length;){
+
+            Pointer pointer = findPointer(i); //Tries to find a pointer for the current look ahead buffer
+            if (pointer != null){ //If a pointer was found
+
+                if (incompressible.length() != 0) { //Write stored incompressible variables if any
+                    outputStream.writeByte((byte) (incompressible.length()));
+                    for(int c = 0; c < incompressible.length(); c++)
+                        outputStream.writeByte((byte)incompressible.charAt(c));
+                    incompressible = new StringBuilder();
                 }
-                outputStream.writeByte((byte)(-pointer.getDistance())); //we then write the negative distance as byte (to help the decompression know when to look backwards)
-                outputStream.writeByte((byte)pointer.getLength());
-                i += pointer.getLength(); //increment the index by the length of pointer
-            } else {
-                incompressible.append(data[i]); //if we have an empty pointer, we append the bytes at index i
+
+                //A pointer is stored as two bytes on the format 1DDD DDDD | DDDD LLLL where d's and l's is distance and length in bit form.
+                //The first bit (1) makes the byte become a negative number and this indicates that it is a pointer
+
+                outputStream.writeByte((byte) (pointer.getDistance() >> 4) | (1 << 7));
+                outputStream.writeByte((((byte) pointer.getDistance() & 0x0F) << 4) | (pointer.getLength() - 1));
+
+                i += pointer.getLength();
+            }
+            else {
+
+                incompressible.append(data[i]);
+
+                //A sequence of incompressible bytes is written on format 0LLL LLLL (as a byte), where l's is size of sequence in bit form, and then 'size' uncompressed characters follow.
+                //The first bit (0) indicates that it is a positive number, and therefore not a pointer.
+
+                if (incompressible.length() == 127) { //If the size becomes 111 1111 (127) or the last character is reached
+                    outputStream.writeByte((byte) (incompressible.length())); //Writes length of a sequence of incompressible bytes
+                    for (int c = 0; c < incompressible.length(); c++) //And the sequence
+                        outputStream.writeByte((byte) incompressible.charAt(c));
+                    incompressible = new StringBuilder();
+                }
                 i += 1;
             }
         }
-        //if our string builder is not empty
         if (incompressible.length() != 0) {
-            outputStream.writeByte((byte)incompressible.length()); //we write the length of the string builder
-            for(int c = 0; c < incompressible.length(); c++)
-                outputStream.writeByte((byte) incompressible.charAt(c)); //we write each character as a byte in the outputstream
+            outputStream.writeByte((byte) (incompressible.length())); //Writes length of a sequence of incompressible bytes
+            for (int c = 0; c < incompressible.length(); c++) //And the sequence
+                outputStream.writeByte((byte) incompressible.charAt(c));
         }
-        //close and flush streams
+
         inputStream.close();
         outputStream.flush();
         outputStream.close();
         printAfter(path);
-        deCompress(path); //then decompress
     }
 
     public void printAfter(String path) throws IOException {
-        //create a new input stream from the compressed path
         DataInputStream compressed = new DataInputStream(new BufferedInputStream(new FileInputStream(path+"compress")));
         byte[] bytes = new byte[compressed.available()];
         compressed.readFully(bytes);
-        System.out.println("\n\n--< After compression >--");
+        System.out.println("\nAfter compression");
         for (byte b:bytes) {
             System.out.print(b + " ");
         }
@@ -97,7 +108,7 @@ public class LZ77 {
         if (max > data.length - 1)
             max = data.length - 1;
 
-        int min = currentIndex - buffersize; //Minimum index of the sliding window
+        int min = currentIndex - BUFFERSIZE; //Minimum index of the sliding window
         if (min < 0)
             min = 0;
 
@@ -118,7 +129,6 @@ public class LZ77 {
                     pointer.setDistance(buffer.length - j);
                     pointer.setLength(searchWord.length);
                     i++;
-                    //System.out.println(searchWord);
                     continue outer; //Continues loop with an additional character in search word until it fails
                 }
                 else {
@@ -139,43 +149,40 @@ public class LZ77 {
     public void deCompress(String path) throws IOException {
         inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(path+"compress")));
         outputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path+"decompress")));
-        int nrOfBytes = inputStream.available();
-        byte[] bytes = new byte[nrOfBytes];
+        byte[] bytes = new byte[inputStream.available()];
         inputStream.readFully(bytes);
-        int last = 0;
-        //byte[] b = new byte[nrOfBytes + 4000];
-        List<Byte> b = new ArrayList<>();
 
-        int i = 0;
-        while (i < bytes.length){
-            int n = bytes[i];
-            if (n >= 0){
-                for (int j = 0; j < n; j++) {
-                    b.add(last + j, bytes[i + j + 1]);
+        ArrayList<Byte> b = new ArrayList<>();
+        int currentIndex = 0;
+
+        System.out.println("\nAfter decompression");
+        int i = 0; //Current index in input file
+        while (i < bytes.length-1){
+            byte condition = bytes[i];
+            if (condition >= 0){
+                //Condition is number of uncompressed bytes
+                for (int j = 0; j < condition; j++){
+                    b.add(bytes[i+j+1]);
                 }
-                i += n + 1;
-                last += n;
+                currentIndex += condition;
+                i += condition + 1; //We read 1 + condition number uncompressed bytes
             }
             else {
-                int length = bytes[i+1];
+                int jump = ((condition & 127) << 4) | ((bytes[i+1] >> 4) & 15);
+                int length = (bytes[i+1] & 0x0F) + 1; //Length of pointer
+
                 for (int j = 0; j < length; j++){
-                    b.add(last + j, b.get(last + n + j));
+                    b.add(b.get(currentIndex - jump + j));
                 }
-                i += 2;
-                last += length;
+                currentIndex += length;
+                i += 2; //We read a pointer (2 bytes)
             }
         }
-        System.out.println("\n\n--< After decompression as bytes >--");
-        for (int x = 0; x < last; x++)
-            System.out.print(b.get(x) + " ");
-        System.out.println("\n\n--< After decompression as text >--");
-        for (int x = 0; x < last; x++)
-            System.out.print(b.get(x));
-        byte[] copy = new byte[b.size()];
-        for (int k = 0; k < b.size(); k++){
-            copy[k] = b.get(k);
+        for (i = 0; i < currentIndex; i++) {
+            System.out.print(b.get(i) + " ");
+            outputStream.write(b.get(i));
         }
-        outputStream.write(copy);
+        inputStream.close();
         outputStream.flush();
         outputStream.close();
     }
@@ -184,8 +191,7 @@ public class LZ77 {
      * Pointer Class to point to a position in Array
      * Defining where and how much to compress
      */
-
-    class Pointer {
+    private class Pointer {
 
         /**
          * length: the length of the text to compress
@@ -231,8 +237,9 @@ public class LZ77 {
     }
 
     public static void main(String[] args) throws IOException {
-        String inpath = "src\\oblig7\\oppgavetekst";
+        String path = "src\\oblig7\\oppgavetekst";
         LZ77 lz77 = new LZ77();
-        lz77.compress(inpath);
+        lz77.compress(path);
+        lz77.deCompress(path);
     }
 }
