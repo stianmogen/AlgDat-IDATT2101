@@ -1,4 +1,4 @@
-package oblig7;
+package oblig7lz;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -19,21 +19,26 @@ public class LZ77 {
     private DataInputStream inputStream;
     private DataOutputStream outputStream;
 
+    public LZ77() {
+    }
+
     /**
      * Compression method taking in the path to the file we want to compress
      * @param path
      * @throws IOException
      */
-    public byte[] compress(String path) throws IOException {
+    public void compress(String path) throws IOException {
         //DataStreams for reading and writing bytes
         inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(path)));
+        outputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path+"compress")));
         data = new char[inputStream.available()]; //sets the length of character array to the size of the input stream
-
-        ArrayList<Byte> compressedBytes = new ArrayList<>();
 
         //Before compressing
         String text = new String(inputStream.readAllBytes(), StandardCharsets.ISO_8859_1); //we read all the bytes from the input stream into a string
         data = text.toCharArray(); //we convert it to a character array
+        for (char c : data ){
+            System.out.print((byte)c + " "); //we print all the bytes from array
+        }
 
         //For keeping track of variables that can not be compressed
         StringBuilder incompressible = new StringBuilder();
@@ -44,17 +49,17 @@ public class LZ77 {
             if (pointer != null){ //If a pointer was found
 
                 if (incompressible.length() != 0) { //Write stored incompressible variables if any
-                    compressedBytes.add((byte) (incompressible.length()));
+                    outputStream.writeByte((byte) (incompressible.length()));
                     for(int c = 0; c < incompressible.length(); c++)
-                        compressedBytes.add((byte)incompressible.charAt(c));
+                        outputStream.writeByte((byte)incompressible.charAt(c));
                     incompressible = new StringBuilder();
                 }
 
                 //A pointer is stored as two bytes on the format 1DDD DDDD | DDDD LLLL where d's and l's is distance and length in bit form.
                 //The first bit (1) makes the byte become a negative number and this indicates that it is a pointer
 
-                compressedBytes.add((byte) ((pointer.getDistance() >> 4) | (1 << 7)));
-                compressedBytes.add((byte) (((pointer.getDistance() & 0x0F) << 4) | (pointer.getLength() - 1)));
+                outputStream.writeByte((byte) (pointer.getDistance() >> 4) | (1 << 7));
+                outputStream.writeByte((((byte) pointer.getDistance() & 0x0F) << 4) | (pointer.getLength() - 1));
 
                 i += pointer.getLength();
             }
@@ -66,30 +71,34 @@ public class LZ77 {
                 //The first bit (0) indicates that it is a positive number, and therefore not a pointer.
 
                 if (incompressible.length() == 127) { //If the size becomes 111 1111 (127) or the last character is reached
-                    compressedBytes.add((byte) (incompressible.length())); //Writes length of a sequence of incompressible bytes
+                    outputStream.writeByte((byte) (incompressible.length())); //Writes length of a sequence of incompressible bytes
                     for (int c = 0; c < incompressible.length(); c++) //And the sequence
-                        compressedBytes.add((byte) incompressible.charAt(c));
+                        outputStream.writeByte((byte) incompressible.charAt(c));
                     incompressible = new StringBuilder();
                 }
                 i += 1;
             }
         }
         if (incompressible.length() != 0) {
-            compressedBytes.add((byte) (incompressible.length())); //Writes length of a sequence of incompressible bytes
+            outputStream.writeByte((byte) (incompressible.length())); //Writes length of a sequence of incompressible bytes
             for (int c = 0; c < incompressible.length(); c++) //And the sequence
-                compressedBytes.add((byte) incompressible.charAt(c));
+                outputStream.writeByte((byte) incompressible.charAt(c));
         }
 
         inputStream.close();
-        return toByteArray(compressedBytes);
+        outputStream.flush();
+        outputStream.close();
+        printAfter(path);
     }
 
-    public byte[] toByteArray(ArrayList<Byte> list) throws IOException {
-        byte[] byteArray = new byte[list.size()];
-        for (int i = 0; i < list.size(); i++){
-            byteArray[i] = list.get(i);
+    public void printAfter(String path) throws IOException {
+        DataInputStream compressed = new DataInputStream(new BufferedInputStream(new FileInputStream(path+"compress")));
+        byte[] bytes = new byte[compressed.available()];
+        compressed.readFully(bytes);
+        System.out.println("\nAfter compression");
+        for (byte b:bytes) {
+            System.out.print(b + " ");
         }
-        return byteArray;
     }
 
     private Pointer findPointer(int currentIndex){
@@ -137,12 +146,16 @@ public class LZ77 {
         return null; //If it was not a match
     }
 
-    public void deCompress(byte[] bytes, String outPath) throws IOException {
-        outputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(outPath)));
+    public void deCompress(String path) throws IOException {
+        inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(path+"compress")));
+        outputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path+"decompress")));
+        byte[] bytes = new byte[inputStream.available()];
+        inputStream.readFully(bytes);
 
         ArrayList<Byte> b = new ArrayList<>();
         int currentIndex = 0;
 
+        System.out.println("\nAfter decompression");
         int i = 0; //Current index in input file
         while (i < bytes.length-1){
             byte condition = bytes[i];
@@ -166,8 +179,10 @@ public class LZ77 {
             }
         }
         for (i = 0; i < currentIndex; i++) {
+            System.out.print(b.get(i) + " ");
             outputStream.write(b.get(i));
         }
+        inputStream.close();
         outputStream.flush();
         outputStream.close();
     }
@@ -219,5 +234,12 @@ public class LZ77 {
             this.distance = matDistance;
         }
 
+    }
+
+    public static void main(String[] args) throws IOException {
+        String path = "src\\oving7lz\\oppgavetekst";
+        LZ77 lz77 = new LZ77();
+        lz77.compress(path);
+        lz77.deCompress(path);
     }
 }
